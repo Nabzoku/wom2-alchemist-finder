@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ore Finder</title>
+
+<style>
+* { box-sizing: border-box; }
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  margin: 20px;
+  font-family: Arial, Helvetica, sans-serif;
+  background: radial-gradient(circle at top, #1a0033, #000);
+  color: white;
+}
+
+/* header */
+h2 {
+  font-size: 22px;
+  letter-spacing: 1px;
+  margin-bottom: 15px;
+  text-shadow: 0 0 10px cyan;
+  text-align: center;
+}
+
+/* ore icons */
+#npcIcons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 25px;
+  justify-content: center;
+}
+
+.npcIcon {
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+  border: 2px solid #444;
+  padding: 4px;
+  background: #111;
+  transition: 0.15s;
+}
+
+.npcIcon:hover {
+  transform: scale(1.15);
+  border-color: #ff00ff;
+  box-shadow: 0 0 10px #ff00ff;
+}
+
+/* map grid 2x2 */
+#mapsContainer {
+  max-width: 700px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.mapWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mapTitle {
+  font-size: 13px;
+  color: #aaa;
+  letter-spacing: 0.5px;
+  padding-left: 4px;
+}
+
+/* map box */
+.map {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #111;
+  border: 2px solid #444;
+  box-shadow: 0 0 6px rgba(0,255,255,0.25);
+  overflow: hidden;
+}
+
+.map img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* marker */
+.marker {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #ffff00;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: blink 1.6s infinite; /* yavaş yanıp sönme */
+  box-shadow: 0 0 12px #ffff00, 0 0 25px orange;
+}
+
+.marker::after {
+  content: attr(data-ore);
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+/* blink keyframes */
+@keyframes blink {
+  50% { opacity: 0.2; }
+}
+
+/* credit */
+#credit {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  font-size: 12px;
+  color: #888;
+  opacity: 0.7;
+  font-family: monospace;
+  pointer-events: none;
+  user-select: none;
+}
+#credit:hover {
+  opacity: 1;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Select Ore</h2>
+
+<div id="npcIcons"></div>
+
+<div id="mapsContainer">
+
+  <div class="mapWrap">
+    <div class="mapTitle">Yongan</div>
+    <div class="map" data-map="r1"><img src="maps/r1.png"></div>
+  </div>
+
+  <div class="mapWrap">
+    <div class="mapTitle">Joan</div>
+    <div class="map" data-map="y1"><img src="maps/y1.png"></div>
+  </div>
+
+  <div class="mapWrap">
+    <div class="mapTitle">Pyungmoo</div>
+    <div class="map" data-map="b1"><img src="maps/b1.png"></div>
+  </div>
+
+  <div class="mapWrap">
+    <div class="mapTitle">Imha</div>
+    <div class="map" data-map="b3"><img src="maps/b3.png"></div>
+  </div>
+
+</div>
+
+<div id="credit">made by TurkErkegi</div>
+
+<script>
+const ores = [
+"Amethyst","Copper","Crystal","Diamond","Ebony","Emerald",
+"Fossil_Wood","Garnet","Gold","Heaven's_Tear","Jade",
+"Pearl","Ruby","Sapphire","Silver","Soul_Crystal","White_Gold"
+];
+
+const locations = [
+{ map: "b1", x: 65.1, y: 13.5, ore: "Ebony" },
+{ map: "b1", x: 67.5, y: 10.0, ore: "Jade" },
+{ map: "b1", x: 65.4, y: 8.2, ore: "Crystal" },
+{ map: "b1", x: 61.6, y: 9.4, ore: "Sapphire" },
+{ map: "b1", x: 66.3, y: 49.4, ore: "Soul_Crystal" },
+{ map: "b1", x: 70.4, y: 50.6, ore: "Ebony" },
+{ map: "b1", x: 68.1, y: 54.1, ore: "Ruby" },
+{ map: "b1", x: 63.4, y: 87.1, ore: "Garnet" },
+{ map: "b1", x: 62.8, y: 91.5, ore: "Soul_Crystal" },
+{ map: "b1", x: 59.3, y: 90.6, ore: "Heaven's_Tear" },
+{ map: "b1", x: 22.8, y: 75.9, ore: "Heaven's_Tear" },
+{ map: "b1", x: 25.4, y: 70.3, ore: "Copper" },
+{ map: "b1", x: 14.9, y: 75.0, ore: "Diamond" },
+{ map: "b1", x: 19.3, y: 30.0, ore: "Silver" },
+{ map: "b1", x: 16.6, y: 26.2, ore: "White_Gold" },
+{ map: "b1", x: 20.7, y: 24.1, ore: "Heaven's_Tear" },
+
+{ map: "b3", x: 85.4, y: 13.2, ore: "Fossil_Wood" },
+{ map: "b3", x: 60.4, y: 63.2, ore: "Emerald" },
+{ map: "b3", x: 19.9, y: 41.2, ore: "Fossil_Wood" },
+{ map: "b3", x: 14.3, y: 27.9, ore: "Ruby" },
+
+{ map: "r1", x: 83.7, y: 22.4, ore: "Pearl" },
+{ map: "r1", x: 81.0, y: 19.4, ore: "Heaven's_Tear" },
+{ map: "r1", x: 74.3, y: 16.5, ore: "Amethyst" },
+{ map: "r1", x: 61.9, y: 9.7, ore: "Diamond" },
+{ map: "r1", x: 58.7, y: 7.9, ore: "White_Gold" },
+{ map: "r1", x: 54.6, y: 7.4, ore: "Ebony" },
+{ map: "r1", x: 53.7, y: 12.1, ore: "Copper" },
+{ map: "r1", x: 34.0, y: 12.1, ore: "White_Gold" },
+{ map: "r1", x: 30.1, y: 14.4, ore: "Gold" },
+{ map: "r1", x: 31.9, y: 31.8, ore: "Diamond" },
+{ map: "r1", x: 24.9, y: 30.9, ore: "Ebony" },
+{ map: "r1", x: 26.6, y: 34.1, ore: "Ruby" },
+{ map: "r1", x: 24.3, y: 37.9, ore: "Soul_Crystal" },
+{ map: "r1", x: 29.6, y: 39.1, ore: "Heaven's_Tear" },
+{ map: "r1", x: 21.0, y: 85.3, ore: "Fossil_Wood" },
+{ map: "r1", x: 16.6, y: 85.6, ore: "Crystal" },
+
+{ map: "y1", x: 70.7, y: 10.6, ore: "Silver" },
+{ map: "y1", x: 54.0, y: 15.3, ore: "Pearl" },
+{ map: "y1", x: 36.9, y: 12.4, ore: "Gold" },
+{ map: "y1", x: 33.4, y: 12.1, ore: "Fossil_Wood" },
+{ map: "y1", x: 75.7, y: 39.1, ore: "Fossil_Wood" },
+{ map: "y1", x: 79.3, y: 49.4, ore: "Ebony" },
+{ map: "y1", x: 38.1, y: 44.7, ore: "Diamond" },
+{ map: "y1", x: 39.0, y: 54.7, ore: "Heaven's_Tear" },
+{ map: "y1", x: 38.1, y: 59.1, ore: "Soul_Crystal" },
+{ map: "y1", x: 41.0, y: 69.4, ore: "Ebony" },
+{ map: "y1", x: 37.8, y: 73.2, ore: "Emerald" },
+{ map: "y1", x: 35.4, y: 88.8, ore: "Copper" },
+{ map: "y1", x: 29.6, y: 92.9, ore: "White_Gold" }
+];
+
+const iconContainer = document.getElementById("npcIcons");
+
+ores.forEach(name => {
+  const img = document.createElement("img");
+  img.src = `icons/${name}.png`;
+  img.className = "npcIcon";
+  img.dataset.ore = name;
+  img.title = name.replace("_"," ");
+  iconContainer.appendChild(img);
+});
+
+let selectedOre = null;
+
+document.querySelectorAll(".npcIcon").forEach(icon => {
+  icon.addEventListener("click", () => {
+    document.querySelectorAll(".npcIcon")
+      .forEach(i => i.style.borderColor = "#444");
+
+    icon.style.borderColor = "red";
+
+    document.querySelectorAll(".marker").forEach(m => m.remove());
+
+    selectedOre = icon.dataset.ore;
+
+    locations
+      .filter(loc => loc.ore === selectedOre)
+      .forEach(loc => {
+        const mapDiv = document.querySelector(`[data-map="${loc.map}"]`);
+        if (!mapDiv) return;
+
+        const marker = document.createElement("div");
+        marker.className = "marker";
+        marker.style.left = loc.x + "%";
+        marker.style.top = loc.y + "%";
+        marker.dataset.ore = selectedOre.replace("_"," ");
+
+        mapDiv.appendChild(marker);
+      });
+
+  });
+});
+</script>
+
+</body>
+</html>
